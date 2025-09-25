@@ -1,3 +1,3 @@
 # scrimba
 
-Projects and exercises from scrimba.com courses.
+Personal website exercise from scrimba.com
