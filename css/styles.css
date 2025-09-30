@@ -4,13 +4,28 @@ body {
     color: #333;
     margin: 0;
     padding: 20px;
+    text-align: center;
+}
+
+h2 ~ p {
+    margin-bottom: 0px;
+    margin-top: 0px
 }
 
 #my-photo {
-    width: 25%;
+    width: 300px;
     height: auto;
     border-radius: 50%;
     border: 3px solid #333;
     display: block;
     margin-bottom: 20px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.icon {
+    width: auto;
+    height: 18px;
+    vertical-align: middle;
+    margin-left: 5px;
 }
