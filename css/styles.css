@@ -27,5 +27,16 @@ h2 ~ p {
     width: auto;
     height: 18px;
     vertical-align: middle;
-    margin-left: 5px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+hr {
+    border-color: black;
+    background-color: black;
+    width: 75%;
+}
+
+#wifes-site {
+    margin-top: 15px;
 }
