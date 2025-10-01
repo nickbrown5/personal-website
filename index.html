@@ -1,32 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="Nick Brown's Personal Website">
-        <title>Nick Brown</title>
-        <link rel="stylesheet" href="./css/styles.css">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap">
-    </head>
-    <body>
-        <img id="my-photo" src="./assets/images/me.jpg" alt="Photo of Nick Brown">
-        <h1>Hi, my name is Nick Brown</h1>
-        <h2>Fun facts about me:</h2>
-        <p class="list">44 years old</p>
-        <p class="list">Live in Texas</p>
-        <p class="list">US Army Veteran</p>
-        <p class="list">Love to travel</p>
-        <p class="list">Married with two kids</p>
-        <p class="list">Love to code</p>
-        <hr>
-        <footer>
-            <h2>Connect with me</h2>
-            <a href="https://www.linkedin.com/in/nick-r-brown/" target="_blank"><img class="icon" src="./assets/icons/LI-In-Bug.png" alt="LinkedIn logo"></a>
-            <a href="https://github.com/nickbrown5" target="_blank"><img class="icon" src="./assets/icons/github-mark.png" alt="GitHub logo"></a>
-            <a href="mailto:brown.nicholas5@gmail.com" target="_blank"><img class="icon" src="./assets/icons/email.png" alt="email icon"></a>
-            <p id="wifes-site">And here is a shameless plug for <a href="https://vpbrown.dreamvacations.com/home-page" target="_blank">my wife's travel site</a> &#128674;</p>
-        </footer>
-    </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nick Brown | Software Engineer</title>
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Nick Brown</h1>
+    <p>Software Engineer • Backend </p>
+  </header>
+
+  <nav>
+    <a href="#about">About</a>
+    <a href="#skills">Skills</a>
+    <a href="#projects">Projects</a>
+    <a href="#experience">Experience</a>
+    <a href="#contact">Contact</a>
+    <button id="toggle-btn">🌙 Dark Mode</button>
+  </nav>
+
+  <section id="about">
+    <h2>About Me</h2>
+    <p>Hello! I'm a software engineer passionate about building scalable systems and elegant solutions. 
+    I enjoy working with cloud infrastructure, backend development, and modern C++/Go/TypeScript.</p>
+  </section>
+
+  <section id="skills">
+    <h2>Skills</h2>
+    <ul>
+      <li>Languages: C++, Go, Python, JavaScript/TypeScript</li>
+      <li>Frameworks: React, Node.js, Django</li>
+      <li>Cloud & Tools: AWS, Docker, Kubernetes, CI/CD</li>
+      <li>Databases: PostgreSQL, MongoDB, Redis</li>
+    </ul>
+  </section>
+
+  <section id="projects">
+    <h2>Projects</h2>
+    <div class="project">
+      <h3>Project One</h3>
+      <p>A short description of what this project does and why it's interesting. 
+      <a href="#">GitHub</a> | <a href="#">Live Demo</a></p>
+    </div>
+    <div class="project">
+      <h3>Project Two</h3>
+      <p>Another project with details about your role, the technologies used, and results achieved. 
+      <a href="#">GitHub</a></p>
+    </div>
+  </section>
+
+  <section id="experience">
+    <h2>Experience</h2>
+    <p><strong>Software Engineer - Company XYZ</strong> (2021-Present)</p>
+    <ul>
+      <li>Built and optimized cloud-based systems handling 1M+ requests/day</li>
+      <li>Reduced build times by 40% by implementing caching and CI/CD pipelines</li>
+    </ul>
+    <p><strong>Intern - Tech Startup</strong> (2020)</p>
+    <ul>
+      <li>Developed features for a SaaS platform using React and Node.js</li>
+    </ul>
+  </section>
+
+  <section id="contact">
+    <h2>Contact</h2>
+    <p>📧 <a href="mailto:yourname@email.com">yourname@email.com</a></p>
+    <p>🔗 <a href="https://linkedin.com/in/yourprofile" target="_blank">LinkedIn</a> | 
+           <a href="https://github.com/yourprofile" target="_blank">GitHub</a></p>
+  </section>
+
+  <footer>
+    <p>© 2025 Your Name. Built with ❤️ and clean code.</p>
+  </footer>
+
+  <script>
+    const btn = document.getElementById("toggle-btn");
+    btn.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      if (document.body.classList.contains("dark")) {
+        btn.textContent = "☀️ Light Mode";
+      } else {
+        btn.textContent = "🌙 Dark Mode";
+      }
+    });
+  </script>
+</body>
 </html>
