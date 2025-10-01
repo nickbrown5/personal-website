@@ -12,8 +12,9 @@ p a:link {
     border-bottom: 2px solid blue;
 }
 
-li {
-    list-style: square inside;
+.list {
+    margin-top: 0px;
+    margin-bottom: 0px;
 }
 
 #my-photo {
