@@ -20,6 +20,7 @@ p a:link {
 #my-photo {
     width: 25%;
     max-width: 300px;
+    min-width: 100px;
     height: auto;
     border-radius: 50%;
     border: 3px solid #333;
@@ -38,9 +39,9 @@ p a:link {
 }
 
 hr {
-    border-color: black;
-    background-color: black;
-    margin-top: 20px;;
+    border: darkgray solid 1px;
+    background-color: darkgray;
+    margin-top: 20px;
     width: 50%;
 }
 
