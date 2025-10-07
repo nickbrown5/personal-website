@@ -91,6 +91,10 @@ footer {
   font-size: 0.9rem;
 }
 
+#contact p {
+    text-align: center;
+}
+
 .icon {
     width: auto;
     height: 30px;
