@@ -1,33 +1,98 @@
+:root {
+  --bg: #f9f9f9;
+  --text: #333;
+  --header-bg: #222;
+  --header-text: #fff;
+  --nav-bg: #444;
+  --link: #0066cc;
+}
+
+body.dark {
+  --bg: #121212;
+  --text: #ddd;
+  --header-bg: #111;
+  --header-text: #eee;
+  --nav-bg: #222;
+  --link: #4da3ff;
+}
+
 body {
-    font-family: 'Oswald', sans-serif;
-    background-color: #f0f0f0;
-    color: #333;
-    margin: 0;
-    padding: 20px;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  line-height: 1.6;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.5s, color 0.5s;
+}
+
+header {
+  background: var(--header-bg);
+  color: var(--header-text);
+  padding: 2rem 1rem;
+  text-align: center;
+}
+header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+}
+header p {
+  font-size: 1.2rem;
+  margin-top: .5rem;
+}
+
+nav {
+  background: var(--nav-bg);
+  padding: .5rem;
+  text-align: center;
+}
+nav a {
+  color: #fff;
+  margin: 0 1rem;
+  text-decoration: none;
+  font-weight: bold;
+}
+nav a:hover {
+  text-decoration: underline;
+}
+
+#toggle-btn {
+  background: none;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  margin-left: 1rem;
+  color: whitesmoke;
+  font-size: 0.9rem;
+}
+
+section {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+section h2 {
+  margin-bottom: 1rem;
+  color: var(--text);
+  border-bottom: 2px solid #eee;
+  padding-bottom: .5rem;
+}
+
+a {
+  color: var(--link);
+}
+
+footer {
+  background: var(--header-bg);
+  color: #aaa;
+  text-align: center;
+  padding: 1rem;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+}
+
+#contact p {
     text-align: center;
-}
-
-p a:link {
-    text-decoration: none;
-    border-bottom: 2px solid blue;
-}
-
-.list {
-    margin-top: 0px;
-    margin-bottom: 0px;
-}
-
-#my-photo {
-    width: 25%;
-    max-width: 300px;
-    min-width: 100px;
-    height: auto;
-    border-radius: 50%;
-    border: 3px solid #333;
-    display: block;
-    margin-bottom: 20px;
-    margin-left: auto;
-    margin-right: auto;
 }
 
 .icon {
@@ -36,15 +101,4 @@ p a:link {
     vertical-align: middle;
     margin-left: 10px;
     margin-right: 10px;
-}
-
-hr {
-    border: darkgray solid 1px;
-    background-color: darkgray;
-    margin-top: 20px;
-    width: 50%;
-}
-
-#wifes-site {
-    margin-top: 15px;
 }
