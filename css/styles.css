@@ -22,7 +22,7 @@ body {
   line-height: 1.6;
   background: var(--bg);
   color: var(--text);
-  transition: background 0.3s, color 0.3s;
+  transition: background 0.5s, color 0.5s;
 }
 
 header {
