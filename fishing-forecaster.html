@@ -144,7 +144,32 @@
             return 0.6;
         }
 
-        async function buildForecast(startDate, lat, lon, days, windowHours = 7) {
+        function pickBestWindows(hourScores, count = 2) {
+            if (!hourScores.length) return [];
+            const top = [...hourScores].sort((a, b) => b.score - a.score).slice(0, count);
+            const windows = top
+                .map((h) => ({
+                    start: new Date(h.time.getTime() - 3600000),
+                    end: new Date(h.time.getTime() + 3600000),
+                    score: h.score,
+                }))
+                .sort((a, b) => a.start - b.start);
+
+            // Merge overlapping/adjacent windows so back-to-back peaks read as one block
+            const merged = [];
+            for (const w of windows) {
+                const last = merged[merged.length - 1];
+                if (last && w.start <= last.end) {
+                    last.end = w.end > last.end ? w.end : last.end;
+                    last.score = Math.max(last.score, w.score);
+                } else {
+                    merged.push({ ...w });
+                }
+            }
+            return merged;
+        }
+
+        async function buildForecast(startDate, lat, lon, days, dawnDuskRadiusHours = 7) {
             const weather = await getHourlyWeatherRange(lat, lon, startDate, days);
             // Open-Meteo returns UTC times with no "Z" suffix - append one so Date parses them as true UTC
             const times = weather.time.map((t) => new Date(t + "Z"));
@@ -156,17 +181,17 @@
             for (let dayOffset = 0; dayOffset < days; dayOffset++) {
                 const date = new Date(startDate);
                 date.setDate(date.getDate() + dayOffset);
+                const dayEnd = new Date(date);
+                dayEnd.setDate(dayEnd.getDate() + 1);
 
                 const { majors, minors } = getSolunarWindows(date, lat, lon);
                 const phaseBonus = moonPhaseBonus(date);
                 const sunrise = SunCalc.getTimes(date, lat, lon).sunrise;
-                const windowStart = new Date(sunrise.getTime() - windowHours * 3600000);
-                const windowEnd = new Date(sunrise.getTime() + windowHours * 3600000);
 
                 const hourScores = [];
                 for (let i = 0; i < times.length; i++) {
                     const t = times[i];
-                    if (t < windowStart || t > windowEnd) continue;
+                    if (t < date || t >= dayEnd) continue;
 
                     let score = 0;
                     if (majors.some((m) => Math.abs(t - m) / 3600000 <= 1)) score += WEIGHTS.major_period;
@@ -175,30 +200,27 @@
                     score += (phaseBonus / 10) * 5;
 
                     const hrsFromSunrise = Math.abs(t - sunrise) / 3600000;
-                    score += WEIGHTS.dawn_dusk * Math.max(0, 1 - hrsFromSunrise / windowHours);
+                    score += WEIGHTS.dawn_dusk * Math.max(0, 1 - hrsFromSunrise / dawnDuskRadiusHours);
 
                     score += WEIGHTS.pressure_trend * pressureTrendScore(pressures, i);
                     score += WEIGHTS.wind * windScore(winds[i]);
                     score += WEIGHTS.cloud_cover * cloudScore(clouds[i]);
 
-                    hourScores.push({
-                        time: t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                        score: Math.round(Math.min(score, 100) * 10) / 10,
-                        pressureHpa: pressures[i],
-                        windKmh: winds[i],
-                        cloudPct: clouds[i],
-                    });
+                    hourScores.push({ time: t, score: Math.round(Math.min(score, 100) * 10) / 10 });
                 }
 
                 dailyResults.push({
                     date,
                     sunrise: sunrise.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                    hours: hourScores,
-                    dayScore: hourScores.length ? Math.max(...hourScores.map((h) => h.score)) : 0,
+                    bestTimes: pickBestWindows(hourScores),
                 });
             }
 
             return dailyResults;
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         }
 
         function renderForecast(dailyResults) {
@@ -208,22 +230,13 @@
                 return;
             }
             container.innerHTML = dailyResults.map((day) => {
-                const rows = day.hours.map((h) => `
-                    <tr>
-                        <td>${h.time}</td>
-                        <td>${h.score}</td>
-                        <td>${h.pressureHpa.toFixed(1)}</td>
-                        <td>${h.windKmh.toFixed(1)}</td>
-                        <td>${h.cloudPct}%</td>
-                    </tr>`).join("");
-                return `
-                    <h3>${day.date.toDateString()} (sunrise ${day.sunrise}) - peak score: ${day.dayScore}</h3>
-                    <table>
-                        <thead>
-                            <tr><th>Time</th><th>Score</th><th>Pressure (hPa)</th><th>Wind (km/h)</th><th>Cloud</th></tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>`;
+                if (!day.bestTimes.length) {
+                    return `<p><strong>${day.date.toDateString()}</strong>: no forecast data available.</p>`;
+                }
+                const windows = day.bestTimes
+                    .map((w) => `${formatTime(w.start)} - ${formatTime(w.end)}`)
+                    .join(" and ");
+                return `<p><strong>${day.date.toDateString()}</strong> (sunrise ${day.sunrise}) - the best times to fish are ${windows}.</p>`;
             }).join("");
         }
 
