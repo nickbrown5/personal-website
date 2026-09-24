@@ -97,11 +97,20 @@
             return Math.max(0, 10 - distanceFromExtreme / 5);
         }
 
-        async function getHourlyWeatherRange(lat, lon, days) {
+        function toISODateString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, "0");
+            const d = String(date.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+        }
+
+        async function getHourlyWeatherRange(lat, lon, startDate, days) {
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + days - 1);
             const url = "https://api.open-meteo.com/v1/forecast" +
                 `?latitude=${lat}&longitude=${lon}` +
                 "&hourly=surface_pressure,wind_speed_10m,cloud_cover,temperature_2m" +
-                `&forecast_days=${days}&timezone=auto`;
+                `&start_date=${toISODateString(startDate)}&end_date=${toISODateString(endDate)}&timezone=auto`;
             const res = await fetch(url);
             if (!res.ok) throw new Error("Weather lookup failed");
             const data = await res.json();
@@ -132,7 +141,7 @@
         }
 
         async function buildForecast(startDate, lat, lon, days, windowHours = 7) {
-            const weather = await getHourlyWeatherRange(lat, lon, days);
+            const weather = await getHourlyWeatherRange(lat, lon, startDate, days);
             const times = weather.time.map((t) => new Date(t));
             const pressures = weather.surface_pressure;
             const winds = weather.wind_speed_10m;
@@ -216,7 +225,9 @@
         const forecastForm = document.getElementById("forecast-form");
         forecastForm.addEventListener("submit", async (event) => {
             event.preventDefault();
-            const startDate = new Date(document.getElementById("start-date").value);
+            // Parse as local date components - new Date("yyyy-mm-dd") parses as UTC and can shift a day
+            const [startYear, startMonth, startDay] = document.getElementById("start-date").value.split("-").map(Number);
+            const startDate = new Date(startYear, startMonth - 1, startDay);
             const zipCode = document.getElementById("zip-code").value;
             const days = parseInt(document.getElementById("forecast-days").value, 10);
 
