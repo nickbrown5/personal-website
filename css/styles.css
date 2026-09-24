@@ -147,3 +147,26 @@ footer {
     background: var(--nav-bg);
     color: #fff;
 }
+
+#forecast-results {
+    margin-top: 1.5rem;
+}
+
+#forecast-results table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+#forecast-results th,
+#forecast-results td {
+    border: 1px solid #aaa;
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+#forecast-results th {
+    background: var(--nav-bg);
+    color: #fff;
+}

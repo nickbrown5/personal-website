@@ -35,26 +35,201 @@
 
             <button type="submit" id="forecast-submit-btn">Get Forecast</button>
         </form>
+
+        <div id="forecast-results"></div>
     </section>
 
     <footer>
         <p>© 2025 Nick Brown. Built with ❤️ and clean code.</p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
     <script>
         const btn = document.getElementById("toggle-btn");
         btn.addEventListener("click", () => {
             document.body.classList.toggle("dark");
             btn.textContent = document.body.classList.contains("dark") ? "☀️ Light Mode" : "🌙 Dark Mode";
         });
+
+        // Scoring weights, ported from fishing_forecaster.py - tune against logged results
+        const WEIGHTS = {
+            major_period: 35,   // moon overhead/underfoot window
+            minor_period: 15,   // moonrise/moonset window
+            dawn_dusk: 20,       // civil twilight windows
+            pressure_trend: 20,  // falling pressure pre-front
+            wind: 5,
+            cloud_cover: 5,
+        };
+
+        async function getLatLonFromZip(zipCode) {
+            const res = await fetch(`https://api.zippopotam.us/us/${zipCode}`);
+            if (!res.ok) throw new Error("Could not find that zip code");
+            const data = await res.json();
+            return {
+                lat: parseFloat(data.places[0].latitude),
+                lon: parseFloat(data.places[0].longitude),
+            };
+        }
+
+        function getSolunarWindows(date, lat, lon) {
+            // SunCalc has no direct transit/antitransit lookup, so approximate the
+            // major periods by scanning moon altitude across the day in 5-minute steps.
+            const dayStart = new Date(date);
+            dayStart.setHours(0, 0, 0, 0);
+            let maxAlt = -Infinity, minAlt = Infinity, transit = null, antitransit = null;
+            for (let m = 0; m < 24 * 60; m += 5) {
+                const t = new Date(dayStart.getTime() + m * 60000);
+                const alt = SunCalc.getMoonPosition(t, lat, lon).altitude;
+                if (alt > maxAlt) { maxAlt = alt; transit = t; }
+                if (alt < minAlt) { minAlt = alt; antitransit = t; }
+            }
+
+            const moonTimes = SunCalc.getMoonTimes(date, lat, lon);
+            const minors = [moonTimes.rise, moonTimes.set].filter(Boolean);
+
+            return { majors: [transit, antitransit], minors };
+        }
+
+        function moonPhaseBonus(date) {
+            // New and full moons historically correlate with stronger solunar activity.
+            const phasePct = SunCalc.getMoonIllumination(date).fraction * 100;
+            const distanceFromExtreme = Math.min(phasePct, 100 - phasePct);
+            return Math.max(0, 10 - distanceFromExtreme / 5);
+        }
+
+        async function getHourlyWeatherRange(lat, lon, days) {
+            const url = "https://api.open-meteo.com/v1/forecast" +
+                `?latitude=${lat}&longitude=${lon}` +
+                "&hourly=surface_pressure,wind_speed_10m,cloud_cover,temperature_2m" +
+                `&forecast_days=${days}&timezone=auto`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("Weather lookup failed");
+            const data = await res.json();
+            return data.hourly;
+        }
+
+        function pressureTrendScore(pressures, idx, window = 6) {
+            // Falling pressure = feeding trigger (pre-front). Rising = neutral/bad.
+            const start = Math.max(0, idx - window);
+            if (start === idx) return 0.5;
+            const delta = pressures[idx] - pressures[start];
+            if (delta <= -2) return 1.0;
+            if (delta < 0) return 0.75;
+            if (delta === 0) return 0.5;
+            if (delta < 2) return 0.3;
+            return 0.1;
+        }
+
+        function windScore(speedKmh) {
+            if (speedKmh >= 5 && speedKmh <= 20) return 1.0;
+            if (speedKmh < 5) return 0.5;
+            return Math.max(0.0, 1.0 - (speedKmh - 20) / 30);
+        }
+
+        function cloudScore(cloudPct) {
+            if (cloudPct >= 40 && cloudPct <= 90) return 1.0;
+            return 0.6;
+        }
+
+        async function buildForecast(startDate, lat, lon, days, windowHours = 7) {
+            const weather = await getHourlyWeatherRange(lat, lon, days);
+            const times = weather.time.map((t) => new Date(t));
+            const pressures = weather.surface_pressure;
+            const winds = weather.wind_speed_10m;
+            const clouds = weather.cloud_cover;
+
+            const dailyResults = [];
+            for (let dayOffset = 0; dayOffset < days; dayOffset++) {
+                const date = new Date(startDate);
+                date.setDate(date.getDate() + dayOffset);
+
+                const { majors, minors } = getSolunarWindows(date, lat, lon);
+                const phaseBonus = moonPhaseBonus(date);
+                const sunrise = SunCalc.getTimes(date, lat, lon).sunrise;
+                const windowStart = new Date(sunrise.getTime() - windowHours * 3600000);
+                const windowEnd = new Date(sunrise.getTime() + windowHours * 3600000);
+
+                const hourScores = [];
+                for (let i = 0; i < times.length; i++) {
+                    const t = times[i];
+                    if (t < windowStart || t > windowEnd) continue;
+
+                    let score = 0;
+                    if (majors.some((m) => Math.abs(t - m) / 3600000 <= 1)) score += WEIGHTS.major_period;
+                    if (minors.some((m) => Math.abs(t - m) / 3600000 <= 1)) score += WEIGHTS.minor_period;
+
+                    score += (phaseBonus / 10) * 5;
+
+                    const hrsFromSunrise = Math.abs(t - sunrise) / 3600000;
+                    score += WEIGHTS.dawn_dusk * Math.max(0, 1 - hrsFromSunrise / windowHours);
+
+                    score += WEIGHTS.pressure_trend * pressureTrendScore(pressures, i);
+                    score += WEIGHTS.wind * windScore(winds[i]);
+                    score += WEIGHTS.cloud_cover * cloudScore(clouds[i]);
+
+                    hourScores.push({
+                        time: t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                        score: Math.round(Math.min(score, 100) * 10) / 10,
+                        pressureHpa: pressures[i],
+                        windKmh: winds[i],
+                        cloudPct: clouds[i],
+                    });
+                }
+
+                dailyResults.push({
+                    date,
+                    sunrise: sunrise.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                    hours: hourScores,
+                    dayScore: hourScores.length ? Math.max(...hourScores.map((h) => h.score)) : 0,
+                });
+            }
+
+            return dailyResults;
+        }
+
+        function renderForecast(dailyResults) {
+            const container = document.getElementById("forecast-results");
+            if (!dailyResults.length) {
+                container.innerHTML = "<p>No forecast data available.</p>";
+                return;
+            }
+            container.innerHTML = dailyResults.map((day) => {
+                const rows = day.hours.map((h) => `
+                    <tr>
+                        <td>${h.time}</td>
+                        <td>${h.score}</td>
+                        <td>${h.pressureHpa.toFixed(1)}</td>
+                        <td>${h.windKmh.toFixed(1)}</td>
+                        <td>${h.cloudPct}%</td>
+                    </tr>`).join("");
+                return `
+                    <h3>${day.date.toDateString()} (sunrise ${day.sunrise}) - peak score: ${day.dayScore}</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Time</th><th>Score</th><th>Pressure (hPa)</th><th>Wind (km/h)</th><th>Cloud</th></tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>`;
+            }).join("");
+        }
+
         const forecastForm = document.getElementById("forecast-form");
-        forecastForm.addEventListener("submit", (event) => {
+        forecastForm.addEventListener("submit", async (event) => {
             event.preventDefault();
-            // Placeholder until the forecast API is wired up
-            const startDate = document.getElementById("start-date").value;
+            const startDate = new Date(document.getElementById("start-date").value);
             const zipCode = document.getElementById("zip-code").value;
-            const days = document.getElementById("forecast-days").value;
-            console.log("Forecast requested:", { startDate, zipCode, days });
+            const days = parseInt(document.getElementById("forecast-days").value, 10);
+
+            const resultsContainer = document.getElementById("forecast-results");
+            resultsContainer.innerHTML = "<p>Loading forecast...</p>";
+
+            try {
+                const { lat, lon } = await getLatLonFromZip(zipCode);
+                const dailyResults = await buildForecast(startDate, lat, lon, days);
+                renderForecast(dailyResults);
+            } catch (err) {
+                resultsContainer.innerHTML = `<p>Error: ${err.message}</p>`;
+            }
         });
     </script>
 </body>
