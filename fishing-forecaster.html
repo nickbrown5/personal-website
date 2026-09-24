@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fishing Forecaster | Nick Brown</title>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+
+<body>
+    <header>
+        <h1>Nick Brown</h1>
+        <p>Senior Software Engineer</p>
+    </header>
+
+    <nav>
+        <a href="./index.html">Back</a>
+        <button id="toggle-btn">&#127769; Dark Mode</button>
+        <button id="fishing-btn">&#127907; Fishing Forecaster</button>
+    </nav>
+
+    <section id="fishing-forecaster">
+        <h2>Fishing Forecaster</h2>
+        <p>Coming soon: a tool to help forecast the best times and conditions for fishing.</p>
+    </section>
+
+    <footer>
+        <p>© 2025 Nick Brown. Built with ❤️ and clean code.</p>
+    </footer>
+
+    <script>
+        const btn = document.getElementById("toggle-btn");
+        btn.addEventListener("click", () => {
+            document.body.classList.toggle("dark");
+            btn.textContent = document.body.classList.contains("dark") ? "☀️ Light Mode" : "🌙 Dark Mode";
+        });
+        const fishingBtn = document.getElementById("fishing-btn");
+        fishingBtn.addEventListener("click", () => {
+            window.location.href = "./fishing-forecaster.html";
+        });
+    </script>
+</body>
+
+</html>
