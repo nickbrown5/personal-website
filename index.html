@@ -20,6 +20,7 @@
         <a href="#experience">Experience</a>
         <a href="#contact">Contact</a>
         <button id="toggle-btn">&#127769; Dark Mode</button>
+        <button id="fishing-btn">&#127907; Fishing Forecaster</button>
     </nav>
 
     <section id="about">
@@ -138,6 +139,10 @@
                 document.getElementById("github-icon").src = "./assets/icons/github-mark.png";
                 document.getElementById("email-icon").src = "./assets/icons/email.png";
             }
+        });
+        const fishingBtn = document.getElementById("fishing-btn");
+        fishingBtn.addEventListener("click", () => {
+            window.open("https://fishing-forecaster.example.com", "_blank");
         });
     </script>
 </body>
