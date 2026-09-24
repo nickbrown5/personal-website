@@ -110,7 +110,7 @@
             const url = "https://api.open-meteo.com/v1/forecast" +
                 `?latitude=${lat}&longitude=${lon}` +
                 "&hourly=surface_pressure,wind_speed_10m,cloud_cover,temperature_2m" +
-                `&start_date=${toISODateString(startDate)}&end_date=${toISODateString(endDate)}&timezone=auto`;
+                `&start_date=${toISODateString(startDate)}&end_date=${toISODateString(endDate)}&timezone=UTC`;
             const res = await fetch(url);
             if (!res.ok) throw new Error("Weather lookup failed");
             const data = await res.json();
@@ -142,7 +142,8 @@
 
         async function buildForecast(startDate, lat, lon, days, windowHours = 7) {
             const weather = await getHourlyWeatherRange(lat, lon, startDate, days);
-            const times = weather.time.map((t) => new Date(t));
+            // Open-Meteo returns UTC times with no "Z" suffix - append one so Date parses them as true UTC
+            const times = weather.time.map((t) => new Date(t + "Z"));
             const pressures = weather.surface_pressure;
             const winds = weather.wind_speed_10m;
             const clouds = weather.cloud_cover;
