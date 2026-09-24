@@ -59,7 +59,7 @@ nav a:hover {
     text-decoration: underline;
 }
 
-#toggle-btn {
+#toggle-btn, #fishing-btn {
     background: none;
     border: 1px solid #aaa;
     border-radius: 4px;
