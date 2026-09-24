@@ -105,12 +105,16 @@
         }
 
         async function getHourlyWeatherRange(lat, lon, startDate, days) {
-            const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + days - 1);
+            // Buffer a day on each side - a location's sunrise +/- window is computed in UTC
+            // and can spill into the adjacent calendar day depending on the timezone offset.
+            const bufferedStart = new Date(startDate);
+            bufferedStart.setDate(bufferedStart.getDate() - 1);
+            const bufferedEnd = new Date(startDate);
+            bufferedEnd.setDate(bufferedEnd.getDate() + days);
             const url = "https://api.open-meteo.com/v1/forecast" +
                 `?latitude=${lat}&longitude=${lon}` +
                 "&hourly=surface_pressure,wind_speed_10m,cloud_cover,temperature_2m" +
-                `&start_date=${toISODateString(startDate)}&end_date=${toISODateString(endDate)}&timezone=UTC`;
+                `&start_date=${toISODateString(bufferedStart)}&end_date=${toISODateString(bufferedEnd)}&timezone=UTC`;
             const res = await fetch(url);
             if (!res.ok) throw new Error("Weather lookup failed");
             const data = await res.json();
